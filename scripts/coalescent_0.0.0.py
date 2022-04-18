@@ -36,7 +36,13 @@ N = 10000000000000000000000000#infinity
 Twait = 10
 n0 = 26
 
-samplednodes = [] #samplede nodes
+n0choose2 = n0 * ( n0 - 1 )
+n0choose2 /= 2
+
+def nchoose2(n):
+    return ( n * ( n - 1 ) ) / 2 
+
+samplednodes = [] #sampled nodes
 
 for i in range(n0):
     ab = string.ascii_lowercase[i]
@@ -44,6 +50,8 @@ for i in range(n0):
     #print(samplednodes[i].name)
 
 while len(samplednodes)>2:
+    N = len(samplednodes)
+    Twaitn = #n / ncoohse2
     i+=1  
     r1 = random.sample(range(0,len(samplednodes)-1),2)
     #for n in samplednodes:
