@@ -129,7 +129,7 @@ def coalesce(N,nodes,i):
     nodes.append(tempparent)
     return nodes, i
     
-def multiPopCoal(N,nodes,i,maxtime):
+def multiPopCoal(N,nodes,i,max_time,coal_time):
     '''
     coalescent method for random set of nodes 
     '''
@@ -139,33 +139,47 @@ def multiPopCoal(N,nodes,i,maxtime):
     
     Twaitn = round(Twaitn,2)
     
-    #add wait time to all nodes 
-    for Ni in nodes:
+    #set trunc to false
+    trunc_fin = False
+    
+    if Twaitn + coal_time > max_time: #truncate coalesce
+        truncate_time = max_time - coal_time
+        #add wait time to all nodes 
+        for Ni in nodes:
+            Ni.edgelength+=truncate_time
+        trunc_fin = True
+        return nodes, i, max_time, trunc_fin
+    
+    else: # continue coalescence
+    
+        #add wait time to all nodes 
+        for Ni in nodes:
 
-        Ni.edgelength+=Twaitn
-    i+=1# add one for label
-    ab = string.ascii_lowercase[i]
-     
-    if n >2:
-        #which ramdom pair  
-        r1 = random.sample(range(0,4-1),2) 
-        #set random pair
-        coal1, coal2 = nodes[r1[0]], nodes[r1[1]]
-    else:
-        #set last pair        
-        coal1, coal2 = nodes[0], nodes[1]
-    
-    #pop from array
-    nodes.pop(nodes.index(coal1))
-    nodes.pop(nodes.index(coal2))
-    
-    #create coalesced node
-    tempparent = Node(ab,0,coal1,coal2)
-    coal1.parent, coal2.parent = tempparent, tempparent
-    
-    #append coalesed sample
-    nodes.append(tempparent)
-    return nodes, i, Twaitn
+            Ni.edgelength+=Twaitn
+        i+=1# add one for label
+        ab = string.ascii_lowercase[i]
+         
+        if n >2:
+            #which ramdom pair  
+            r1 = random.sample(range(0,4-1),2) 
+            #set random pair
+            coal1, coal2 = nodes[r1[0]], nodes[r1[1]]
+        else:
+            #set last pair        
+            coal1, coal2 = nodes[0], nodes[1]
+        
+        #pop from array
+        nodes.pop(nodes.index(coal1))
+        nodes.pop(nodes.index(coal2))
+        
+        #create coalesced node
+        tempparent = Node(ab,0,coal1,coal2)
+        coal1.parent, coal2.parent = tempparent, tempparent
+        
+        #append coalesed sample
+        nodes.append(tempparent)
+        
+        return nodes, i, Twaitn+coal_time, False
     
 def find_parens(s):
     toret = {}
@@ -259,44 +273,81 @@ if __name__ == '__main__':
     
     
      
-    N = 100#population size 
+    N = 99#population size 
     n0 = 12#sample size 
     n00 = 4 # sample size per populations 
     num_pop = 3
     
     #Three Population coalescence
-    samplednodes = [[]] #sampled nodes 
+    samplednodes = [] #sampled nodes 
     for j in range(num_pop):
         samplednodes.append([])
+        print('j',j)
     
     ii = 0
     # Intitialize sampled nodes with alphabet as names 
-    for i in range(int(n0 / num_pop)):
-        for j in range(num_pop):
+    for j in range(num_pop):
+        for i in range(int(n00)):    
             ab = string.ascii_lowercase[ii]
-            samplednodes[i].append(Node(ab,0))
+            samplednodes[j].append(Node(ab,0))
             ii += 1
     
     print(samplednodes)    
     
-    #coalesce populations until time runs out 
+    
+    while len(samplednodes) != 1:
+        #coalesce populations until time runs out 
+        print()
+        print('nodes left', samplednodes)
+        for sampled_population in samplednodes:
+
+            #coalesce until 1 theorical sample 
+            coal_time = 0
+            pop_time = 100
+            trunc_T = False
+            while (len(sampled_population)>1)&(not trunc_T):
+                print("sampled pop:",sampled_population)
+                print("looptest:",(len(sampled_population)>1)&(not trunc_T))
+                print("looptest:",(not trunc_T))
+                print("looptest:",trunc_T)
+                sampled_population, ii, coal_time, trunc_T = multiPopCoal(N,
+                                                              sampled_population,
+                                                              ii,pop_time,coal_time)
+        
+                print('remaining nodes', sampled_population,coal_time,trunc_T)
+                
+        #first append
+
+        if len(samplednodes) == 3:
+            print('appending',samplednodes)
+            samplednodes = [samplednodes[0]+samplednodes[1],samplednodes[-1]]
+        elif len(samplednodes) == 2:
+            print('appending last',samplednodes)
+            samplednodes = [samplednodes[0]+samplednodes[1]]
     
     for sampled_population in samplednodes:
+
         #coalesce until 1 theorical sample 
         coal_time = 0
-        pop_time = 100
-        while len(sampled_population)>1:
-            print(sampled_population)
-            
-            sampled_population, ii, coal_time = multiPopCoal(N,sampled_population,ii,pop_time,coal_time)
+        pop_time = 1000
+        trunc_T = False
+        while (len(sampled_population)>1)&(not trunc_T):
+            print("sampled pop:",sampled_population)
+            print("looptest:",(len(sampled_population)>1)&(not trunc_T))
+            print("looptest:",(not trunc_T))
+            print("looptest:",trunc_T)
+            sampled_population, ii, coal_time, trunc_T = multiPopCoal(N,
+                                                          sampled_population,
+                                                          ii,pop_time,coal_time)
 
-
-        #set last theorically coalesced sample as root
-        root = sampled_population[0]
-        
-        #initialize tree with root node as head
-        tree = Tree(root)
-        print(tree)
+            print('remaining nodes', sampled_population,coal_time,trunc_T)
+    
+    #set last theorically coalesced sample as root
+    root = samplednodes[0][0]
+    
+    #initialize tree with root node as head
+    tree = Tree(root)
+    print("tree",tree)
     
     
     
@@ -304,7 +355,7 @@ if __name__ == '__main__':
     
     
     
-    # ONE Population coalescence
+    # ONE Population coalescence  
     
     samplednodes = [] #sampled nodes 
     # Intitialize sampled nodes with alphabet as names 

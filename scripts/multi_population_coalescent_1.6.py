@@ -129,7 +129,7 @@ def coalesce(N,nodes,i):
     nodes.append(tempparent)
     return nodes, i
     
-def multiPopCoal(N,nodes,i,maxtime):
+def multiPopCoal(N,nodes,i,max_time,coal_time):
     '''
     coalescent method for random set of nodes 
     '''
@@ -139,33 +139,47 @@ def multiPopCoal(N,nodes,i,maxtime):
     
     Twaitn = round(Twaitn,2)
     
-    #add wait time to all nodes 
-    for Ni in nodes:
+    #set trunc to false
+    trunc_fin = False
+    
+    if Twaitn + coal_time > max_time: #truncate coalesce
+        truncate_time = max_time - coal_time
+        #add wait time to all nodes 
+        for Ni in nodes:
+            Ni.edgelength+=truncate_time
+        trunc_fin = True
+        return nodes, i, max_time, trunc_fin
+    
+    else: # continue coalescence
+    
+        #add wait time to all nodes 
+        for Ni in nodes:
 
-        Ni.edgelength+=Twaitn
-    i+=1# add one for label
-    ab = string.ascii_lowercase[i]
-     
-    if n >2:
-        #which ramdom pair  
-        r1 = random.sample(range(0,4-1),2) 
-        #set random pair
-        coal1, coal2 = nodes[r1[0]], nodes[r1[1]]
-    else:
-        #set last pair        
-        coal1, coal2 = nodes[0], nodes[1]
-    
-    #pop from array
-    nodes.pop(nodes.index(coal1))
-    nodes.pop(nodes.index(coal2))
-    
-    #create coalesced node
-    tempparent = Node(ab,0,coal1,coal2)
-    coal1.parent, coal2.parent = tempparent, tempparent
-    
-    #append coalesed sample
-    nodes.append(tempparent)
-    return nodes, i, Twaitn
+            Ni.edgelength+=Twaitn
+        i+=1# add one for label
+        ab = string.ascii_lowercase[i]
+         
+        if n >2:
+            #which ramdom pair  
+            r1 = random.sample(range(0,4-1),2) 
+            #set random pair
+            coal1, coal2 = nodes[r1[0]], nodes[r1[1]]
+        else:
+            #set last pair        
+            coal1, coal2 = nodes[0], nodes[1]
+        
+        #pop from array
+        nodes.pop(nodes.index(coal1))
+        nodes.pop(nodes.index(coal2))
+        
+        #create coalesced node
+        tempparent = Node(ab,0,coal1,coal2)
+        coal1.parent, coal2.parent = tempparent, tempparent
+        
+        #append coalesed sample
+        nodes.append(tempparent)
+        
+        return nodes, i, Twaitn+coal_time, trunc_fin
     
 def find_parens(s):
     toret = {}
@@ -279,18 +293,25 @@ if __name__ == '__main__':
     
     print(samplednodes)    
     
-    #coalesce populations until time runs out 
     
+    
+    #coalesce populations until time runs out 
     for sampled_population in samplednodes:
         #coalesce until 1 theorical sample 
         coal_time = 0
-        pop_time = 100
-        while len(sampled_population)>1:
-            print(sampled_population)
+        pop_time = 50
+        trunc_T = False
+        while (len(sampled_population)>1)&(not trunc_T):
+            print("sampled pop:",sampled_population)
             
-            sampled_population, ii, coal_time = multiPopCoal(N,sampled_population,ii,pop_time,coal_time)
+            sampled_population, ii, coal_time, trunc_T = multiPopCoal(N,
+                                                          sampled_population,
+                                                          ii,pop_time,coal_time)
 
-
+            print('remaining nodes', sampled_population,coal_time)
+            
+        #first append
+        
         #set last theorically coalesced sample as root
         root = sampled_population[0]
         
@@ -304,7 +325,7 @@ if __name__ == '__main__':
     
     
     
-    # ONE Population coalescence
+    # ONE Population coalescence  
     
     samplednodes = [] #sampled nodes 
     # Intitialize sampled nodes with alphabet as names 
