@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Apr 13 20:20:50 2022
-FINAL 1 constant N_e
+Checkpoint 1: coalesce tree with same time to coalese 
+figre out how to add Coal?? to population tree 
+
 @author: aorti
 
 This code creates a coalescent model for a set number of sampled nodes.
